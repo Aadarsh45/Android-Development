@@ -1,0 +1,192 @@
+
+### **1. Sealed Class**
+A sealed class is a special kind of class in Kotlin that allows you to represent a restricted hierarchy. It ensures that all subclasses are defined within the same file, which makes it easier to manage and use them in control flow statements like `when`.
+
+#### Features:
+- All subclasses must be defined in the same file as the sealed class.
+- Prevents the creation of new subclasses outside the defined hierarchy.
+- Often used to represent states, events, or operations.
+
+#### Example:
+```kotlin
+sealed class Result {
+    data class Success(val data: String) : Result()
+    data class Error(val exception: Exception) : Result()
+    object Loading : Result()
+}
+
+fun handleResult(result: Result) {
+    when (result) {
+        is Result.Success -> println("Data: ${result.data}")
+        is Result.Error -> println("Error: ${result.exception.message}")
+        Result.Loading -> println("Loading...")
+    }
+}
+```
+
+#### Use Case:
+- Representing UI states in an application (e.g., Loading, Success, Error).
+- Handling operations where there are a limited number of possible outcomes.
+
+---
+
+### **2. Enum Class**
+An enum class is used to represent a fixed set of constants. Unlike sealed classes, they don't allow additional data per constant unless explicitly defined.
+
+#### Features:
+- All values are predefined and cannot be changed at runtime.
+- Lightweight compared to sealed classes.
+
+#### Example:
+```kotlin
+enum class DayOfWeek {
+    MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+}
+
+fun isWeekend(day: DayOfWeek): Boolean {
+    return when (day) {
+        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> true
+        else -> false
+    }
+}
+```
+
+#### Use Case:
+- Representing a fixed set of options (e.g., days of the week, directions, states).
+
+---
+
+### **3. LiveData**
+`LiveData` is an observable data holder class in Android lifecycle-aware components. It is typically used in ViewModel to observe data in activities/fragments.
+
+#### Features:
+- Lifecycle-aware: Updates are only sent to active observers.
+- Thread-safe.
+- Automatically handles lifecycle changes.
+
+#### Example:
+```kotlin
+class MyViewModel : ViewModel() {
+    private val _message = MutableLiveData<String>()
+    val message: LiveData<String> get() = _message
+
+    fun updateMessage(newMessage: String) {
+        _message.value = newMessage
+    }
+}
+
+// In Activity or Fragment
+viewModel.message.observe(this) { msg ->
+    println("Message: $msg")
+}
+```
+
+#### Use Case:
+- Observing UI-related data in a lifecycle-aware manner.
+- Useful in MVVM architecture to separate UI logic from business logic.
+
+---
+
+### **4. Flow**
+`Flow` is a Kotlin coroutine-based API for managing asynchronous data streams. It emits multiple values sequentially over time.
+
+#### Features:
+- Supports suspension.
+- Cold stream: The producer starts when the flow is collected.
+
+#### Example:
+```kotlin
+fun getNumbers(): Flow<Int> = flow {
+    for (i in 1..5) {
+        delay(1000) // Simulate delay
+        emit(i)
+    }
+}
+
+fun main() = runBlocking {
+    getNumbers().collect { value ->
+        println("Received: $value")
+    }
+}
+```
+
+#### Use Case:
+- Handling data streams, such as periodic updates or real-time data.
+- Making network requests or database queries asynchronously.
+
+---
+
+### **5. StateFlow**
+`StateFlow` is a Flow-based API for state management. It always holds a single, up-to-date value and emits updates to its subscribers.
+
+#### Features:
+- Hot stream: Active even without subscribers.
+- Similar to LiveData but coroutine-based and not lifecycle-aware.
+
+#### Example:
+```kotlin
+class MyViewModel : ViewModel() {
+    private val _state = MutableStateFlow("Initial State")
+    val state: StateFlow<String> get() = _state
+
+    fun updateState(newState: String) {
+        _state.value = newState
+    }
+}
+
+// In Activity or Fragment
+lifecycleScope.launchWhenStarted {
+    viewModel.state.collect { state ->
+        println("State: $state")
+    }
+}
+```
+
+#### Use Case:
+- State management in MVVM architecture.
+- Replacing LiveData for coroutines-based workflows.
+
+---
+
+### **6. SharedFlow**
+`SharedFlow` is a Flow-based API for broadcasting events to multiple collectors. Unlike StateFlow, it does not retain the latest value and is designed for event-driven use cases.
+
+#### Features:
+- Hot stream.
+- Emits to all active subscribers.
+
+#### Example:
+```kotlin
+class MyViewModel : ViewModel() {
+    private val _event = MutableSharedFlow<String>()
+    val event: SharedFlow<String> get() = _event
+
+    suspend fun sendEvent(message: String) {
+        _event.emit(message)
+    }
+}
+
+// In Activity or Fragment
+lifecycleScope.launchWhenStarted {
+    viewModel.event.collect { event ->
+        println("Event: $event")
+    }
+}
+```
+
+#### Use Case:
+- Broadcasting events such as navigation commands or one-time notifications.
+- Multi-subscriber scenarios where all collectors need to receive updates.
+
+---
+
+### Comparison Table:
+
+| Feature         | LiveData         | Flow            | StateFlow       | SharedFlow      |
+|------------------|------------------|-----------------|-----------------|-----------------|
+| Lifecycle-aware  | Yes              | No              | No              | No              |
+| Hot/Cold Stream  | Hot              | Cold            | Hot             | Hot             |
+| Retains Last Value | Yes             | No              | Yes             | No              |
+| Use Case         | UI State         | Data Streams    | State Management | Events          |
+
+These tools empower developers to build efficient, reactive, and maintainable applications with robust state and event handling mechanisms.
